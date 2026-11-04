@@ -98,7 +98,7 @@ Revisión final Sol medium: sin defectos funcionales confirmados; verificó los 
 
 Auditoría npm ejecutada por el orquestador: `npm.cmd audit --json` informó 0 vulnerabilidades (incluidas dependencias de desarrollo) en este momento; no garantiza ausencia de vulnerabilidades futuras ni sustituye auditoría de Maven.
 
-Listo para commit Conventional Commit y push de la rama personal tras comprobar el diff. No se publicaron código con pruebas fallidas ni artefactos de build/pruebas.
+Publicado en `origin/feat/deterministic-ui`: `add905c` — `feat(ui): add deterministic incident analysis workspace`. Autor y committer personales `jacksonos`; autenticación de push verificada como `jacksonos`, sin cambiar la cuenta activa global. `git diff --cached --check` sin errores tras quitar líneas vacías finales del CSS (sin cambio funcional). No se publicaron código con pruebas fallidas ni artefactos de build/pruebas. No se hizo merge a main ni se abrió PR; la rama queda disponible para revisión.
 
 ## Límites y siguiente paso
 - Detenido tras fase 3. Siguiente: fase 4 (IA opcional), solo tras nueva autorización. No hay contenedor ni despliegue.
@@ -112,5 +112,7 @@ Listo para commit Conventional Commit y push de la rama personal tras comprobar 
 Repositorio: https://github.com/jacksonos/incident-relay.git. Remoto originalmente vacío; Git local inicializado en `main` y `origin` vinculado. Autor local: `jacksonos <92521092+jacksonos@users.noreply.github.com>`, confirmado por el usuario. Cuenta corporativa no usada para publicar.
 
 Publicado en `origin/main`: `a277716` — `feat(api): bootstrap deterministic incident analysis MVP` (fases 0–2). Push autenticado como `jacksonos`, sin cambiar la cuenta activa global de GitHub CLI. Rama local y remota sincronizadas al terminar la publicación. Commits futuros: Conventional Commits; no hacer force-push ni incluir artefactos, secretos o logs reales.
+
+Fase 3 publicada en la rama `feat/deterministic-ui` con commit `add905c`; este handoff registra el resultado en un commit documental posterior, sin alterar los resultados de verificación.
 
 Verificación previa al commit: Luna low volvió a ejecutar `clean verify`: 48 pruebas, 0 fallos/errores/omitidas, exit code 0. Los archivos locales de la extensión `.github/modernize/java-upgrade/` están ignorados por su propio `.gitignore` y se dejaron intactos.
