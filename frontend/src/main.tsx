@@ -168,7 +168,7 @@ function App() {
         </div>
         <p>
           {filtered.length} de {analysis.events.length} eventos</p>
-        <div className="timeline">
+        <div className="evidence-layout"><div className="timeline">
           {filtered.length ? filtered.map(e => <button className="event" key={e.id} onClick={() => setSelected(e)} aria-pressed={selected?.id === e.id}>
             <span className={'level ' + e.level}>
               {e.level}</span>
@@ -187,7 +187,7 @@ function App() {
           </p>
           <pre>
             {selected.rawLine}</pre>
-        </div>}
+        </div>}</div>
       </section>
       <section>
         <h2>4. Borrador y descarga</h2>
@@ -199,6 +199,10 @@ function App() {
             {result?.postmortemMarkdown}</pre>
         </>}</section>
     </>}
+    {!analysis && !busy && <section className="empty-results" aria-label="Resultados">
+      <h2>Resultados</h2>
+      <p>Analiza una entrada para consultar el resumen, la cronología y la evidencia.</p>
+    </section>}
   </main>;
 }
 

@@ -3,6 +3,8 @@
 ## Autorización
 Fases 0–3 completadas. El usuario autorizó publicar lo pendiente con la cuenta personal `jacksonos`, continuar fase 3 y resolver su bloqueo manteniendo el reparto. Fases 4–5 bloqueadas hasta nueva autorización.
 
+Autorización adicional completada: mejorar la interfaz con `design-taste-frontend`, como refinamiento conservador de fase 3 sobre `feat/deterministic-ui`. No autoriza fase 4 ni cambios de contrato/backend. Flujo, evidencia y privacidad preservados; resultados del refinamiento registrados abajo.
+
 ## Fase 0
 Completada. Monorepo, instrucciones, plan, ADR, Java 21 / Spring Boot 3.5.7 y Maven wrapper 3.9.11.
 
@@ -99,6 +101,27 @@ Revisión final Sol medium: sin defectos funcionales confirmados; verificó los 
 Auditoría npm ejecutada por el orquestador: `npm.cmd audit --json` informó 0 vulnerabilidades (incluidas dependencias de desarrollo) en este momento; no garantiza ausencia de vulnerabilidades futuras ni sustituye auditoría de Maven.
 
 Publicado en `origin/feat/deterministic-ui`: `add905c` — `feat(ui): add deterministic incident analysis workspace`. Autor y committer personales `jacksonos`; autenticación de push verificada como `jacksonos`, sin cambiar la cuenta activa global. `git diff --cached --check` sin errores tras quitar líneas vacías finales del CSS (sin cambio funcional). No se publicaron código con pruebas fallidas ni artefactos de build/pruebas. No se hizo merge a main ni se abrió PR; la rama queda disponible para revisión.
+
+## Refinamiento visual de fase 3
+Completado el 2026-11-04 a petición del usuario con `design-taste-frontend`. Se aplicaron solo principios pertinentes a una herramienta de análisis, no patrones de landing ni imágenes/marketing decorativos. Variación 3/10, movimiento 2/10, densidad 6/10. Sin dependencias nuevas ni recursos externos.
+
+Cambios:
+- Conservados marca, aviso de privacidad, etiquetas y orden de campos, backend, evidencia y descarga completa.
+- CSS consolidado con variables semánticas; paleta azul/neutra existente y tema automático según `prefers-color-scheme`, coherente en todas las superficies.
+- Resumen con jerarquía numérica, fechas UTC legibles en móvil, estado inicial accionable, controles de al menos 44 px y foco visible.
+- Cronología y detalle relacionados lateralmente en escritorio y apilados en móvil; texto largo contenido sin overflow global. Detalle con `:has()` en navegadores modernos; no se verificaron navegadores antiguos.
+- Se preservan los nueve E2E y se añaden dos casos claro/oscuro: fondos computados distintos, foco con estilo/anchura/contraste, muestras de contraste de CTA/etiqueta, estados de carga/error/advertencia/sin coincidencias, detalle por teclado y descarga idéntica.
+
+Orquestación ejecutada: Luna low auditó archivos; Terra medium implementó; Sol medium revisó y pidió cerrar falsos positivos de temas/foco, corregidos sin defectos funcionales nuevos confirmados. Orquestador inspeccionó capturas reales claro/oscuro/móvil y ajustó la distribución de fechas en pantallas pequeñas.
+
+Verificación independiente de Luna low:
+- `npm.cmd run build`: exit code 0, 88 módulos transformados.
+- `npm.cmd run test:e2e -- --config playwright.verify.config.ts`: 11 aprobadas, 0 fallidas, exit code 0. Se repitieron build y 11 E2E tras el último ajuste CSS móvil, también correctos.
+- `.\mvnw.cmd -B -ntp -f backend/pom.xml clean verify`: 48 pruebas, 0 fallos/errores/omitidas, exit code 0. Backend no cambió después de esa verificación.
+
+El puerto 5173 tenía un Vite existente del usuario; no se detuvo. La primera ejecución de Terra reutilizó ese servicio con configuración temporal; no se usó como evidencia final. Las ejecuciones finales usaron instancias propias en frontend 5174 y backend 8080, con `reuseExistingServer:false`. La configuración temporal solo cambiaba el puerto frontend/baseURL respecto a la normal; se eliminó antes del commit. Para repetir normalmente: puertos 5173/8080 libres, JAR construido y `npm.cmd run test:e2e` en frontend.
+
+Capturas reales ignoradas en `frontend/test-results/`: `app-tema-light-evidencia-larga-y-foco/light-desktop.png`, `app-tema-dark-evidencia-larga-y-foco/dark-desktop.png`, `app-móvil-y-navegación-por-teclado/mobile.png`. Se inspeccionó el ajuste final móvil y ambos temas. Muestras de contraste y tests no sustituyen auditoría completa; no se ejecutó Lighthouse ni se midieron Core Web Vitals, no hubo pruebas en teléfono real/Safari/Firefox. No se afirma cumplimiento total de la checklist de marketing, que no aplica a esta superficie de producto.
 
 ## Límites y siguiente paso
 - Detenido tras fase 3. Siguiente: fase 4 (IA opcional), solo tras nueva autorización. No hay contenedor ni despliegue.

@@ -110,6 +110,69 @@ test('móvil y navegación por teclado', async ({ page }, testInfo) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+for (const scheme of ['light', 'dark'] as const) {
+  test(`tema ${scheme}, evidencia larga y foco`, async ({ page }, testInfo) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Resultados' })).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Fuente')).toBeFocused();
+    const contrast = await page.evaluate(() => {
+      const rgb = (value: string) => value.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+      const luminance = (color: number[]) => color.map(v => v / 255).map(v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+      const ratio = (a: string, b: string) => { const x = luminance(rgb(a)); const y = luminance(rgb(b)); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+      const button = getComputedStyle(document.querySelector('button')!);
+      const label = getComputedStyle(document.querySelector('label')!);
+      const surface = getComputedStyle(document.querySelector('section')!);
+      const input = getComputedStyle(document.querySelector('select')!);
+      return {
+        background: getComputedStyle(document.documentElement).backgroundColor,
+        outlineStyle: input.outlineStyle,
+        outlineWidth: parseFloat(input.outlineWidth),
+        ratios: [ratio(button.color, button.backgroundColor), ratio(label.color, surface.backgroundColor), ratio(input.outlineColor, surface.backgroundColor)],
+      };
+    });
+    expect(contrast.background).toBe(scheme === 'light' ? 'rgb(242, 245, 248)' : 'rgb(16, 27, 37)');
+    expect(contrast.outlineStyle).not.toBe('none');
+    expect(contrast.outlineWidth).toBeGreaterThanOrEqual(2);
+    expect(contrast.ratios[0]).toBeGreaterThanOrEqual(4.5);
+    expect(contrast.ratios[1]).toBeGreaterThanOrEqual(4.5);
+    expect(contrast.ratios[2]).toBeGreaterThanOrEqual(3);
+    await page.getByRole('button', { name: 'Analizar logs' }).click();
+    await expect(page.getByRole('alert')).toContainText('vacía');
+    const raw = `2026-01-01T00:00:00Z ERROR service - ${'evidencia'.repeat(120)}`;
+    await page.getByLabel('Contenido').fill(`${raw}\nlínea inválida`);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const began = new Promise<void>(resolve => { started = resolve; });
+    await page.route('**/api/analyze', async route => { started(); await gate; await route.continue(); });
+    await page.getByRole('button', { name: 'Analizar logs' }).click();
+    await began;
+    await expect(page.getByRole('status')).toContainText('Procesando');
+    release();
+    await expect(page.getByText('Análisis parcial:', { exact: false })).toBeVisible();
+    await page.getByLabel('Buscar texto').fill('sin coincidencia');
+    await expect(page.getByText('No hay coincidencias.')).toBeVisible();
+    await page.getByRole('button', { name: 'Limpiar filtros' }).click();
+    await page.locator('.event').first().focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.event').first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.detail pre')).toHaveText(raw);
+    await page.getByRole('button', { name: 'Mostrar borrador' }).click();
+    await expect(page.locator('.draft')).not.toBeEmpty();
+    const downloaded = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Descargar .md' }).click();
+    expect(await readFile((await (await downloaded).path())!, 'utf8')).toBe(await page.locator('.draft').textContent());
+    await page.screenshot({ path: testInfo.outputPath(`${scheme}-desktop.png`), fullPage: true });
+    for (const width of [1280, 768, 375, 320]) {
+      await page.setViewportSize({ width, height: 800 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  });
+}
+
 test('lectura de archivo antigua no sobrescribe la nueva fuente', async ({ page }) => {
   await page.addInitScript(() => {
     const original = File.prototype.arrayBuffer;
