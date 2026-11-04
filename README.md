@@ -10,7 +10,7 @@ Repositorio de destino indicado por el usuario: https://github.com/jacksonos/inc
 - Linux/macOS: `sh mvnw -f backend/pom.xml test`
 - Build: sustituir `test` por `package`.
 
-La API HTTP está disponible; no hay interfaz, persistencia ni IA. Para iniciarla: `java -jar backend/target/incident-replay-0.1.0-SNAPSHOT.jar` después del build. Por defecto escucha solo en `127.0.0.1`. Es posible sobrescribirlo explícitamente con `--server.address=<dirección>`, pero no debe exponerse sin evaluar seguridad e infraestructura. Solo usar datos ficticios en un entorno local de confianza.
+La interfaz determinista está en `frontend/`; ver [instrucciones de ejecución y pruebas](frontend/README.md). No hay persistencia ni IA. Para iniciar la API: `java -jar backend/target/incident-replay-0.1.0-SNAPSHOT.jar` después del build. Por defecto escucha solo en `127.0.0.1`. Es posible sobrescribirlo explícitamente con `--server.address=<dirección>`, pero no debe exponerse sin evaluar seguridad e infraestructura. Solo usar datos ficticios en un entorno local de confianza.
 
 ## API HTTP
 - `GET /api/health`: `200 {"status":"ok"}`.
@@ -34,4 +34,4 @@ El reporte conserva evidencia como texto escapado para que mensajes con HTML o M
 Una línea por evento, UTF-8, LF/CRLF, timestamp ISO 8601 con `Z` o desplazamiento, nivel DEBUG/INFO/WARN/ERROR, servicio sin espacios y mensaje no vacío. Máximo 1 MiB y 10 000 líneas no vacías. Líneas vacías se cuentan aparte; las inválidas se reportan por número. Sin eventos válidos, la entrada se rechaza.
 
 ## Datos y límites
-Solo usar ejemplos ficticios; no introducir secretos ni datos personales. El núcleo no almacena ni registra el contenido de entrada. La interfaz y cualquier proveedor externo se incorporarán en fases posteriores con su política explícita. No existe despliegue público.
+Solo usar ejemplos ficticios; no introducir secretos ni datos personales. El núcleo no almacena ni registra el contenido de entrada; la interfaz lo mantiene en memoria durante la sesión y lo envía a la API local al analizar. No existe despliegue público ni proveedor externo.

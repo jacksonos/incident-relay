@@ -1,6 +1,6 @@
 # Plan de entrega — seis fases
 
-Cada fase termina ejecutando sus comprobaciones y registrando comando, resultado y pendientes en `HANDOFF.md`. Un fallo bloquea la siguiente fase. Fases 0–2 completadas y verificadas; fases 3–5 requieren nueva autorización.
+Cada fase termina ejecutando sus comprobaciones y registrando comando, resultado y pendientes en `HANDOFF.md`. Un fallo bloquea la siguiente fase. Fases 0–3 completadas y verificadas. Fases 4–5 requieren nueva autorización.
 
 ## Fase 0 — Fundación
 - Monorepo `backend/`, `frontend/`, `fixtures/`, `docs/`.
