@@ -1,0 +1,13 @@
+2026-10-15T10:04:10Z ERROR gateway - HTTP 503 returned
+2026-10-15T10:00:00Z INFO payments - Service ready
+2026-10-15T05:01:00-05:00 DEBUG payments - Request accepted id=101
+2026-10-15T10:02:14Z WARN payments - Request latency increased
+
+2026-10-15T12:03:01+02:00 ERROR database - Connection timeout
+    at fictional.database.Connection.open(Connection.java:42)
+2026-10-15T10:03:01Z ERROR database - Connection timeout
+2026-10-15T10:04:11Z ERROR gateway - HTTP 503 returned
+2026-10-15T10:04:12Z WARN payments - Request latency increased
+2026-10-15T10:05:00Z DEBUG database - Retry scheduled
+2026-10-15T10:06:00Z INFO gateway - Response completed status=200
+2026-10-15T10:07:00Z INFO payments - Request completed id=102

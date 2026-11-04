@@ -1,0 +1,37 @@
+# Incident Replay
+
+Convierte logs ficticios de un incidente en una cronología y un borrador de postmortem verificable. Proyecto en construcción por fases: consultar `HANDOFF.md` y `PLAN.md`.
+
+Repositorio de destino indicado por el usuario: https://github.com/jacksonos/incident-relay.git (el producto se llama Incident Replay).
+
+## Requisitos y pruebas
+- JDK 21; acceso a Internet para descargar Maven y dependencias en la primera ejecución.
+- Windows: `.\mvnw.cmd -f backend/pom.xml test`
+- Linux/macOS: `sh mvnw -f backend/pom.xml test`
+- Build: sustituir `test` por `package`.
+
+La API HTTP está disponible; no hay interfaz, persistencia ni IA. Para iniciarla: `java -jar backend/target/incident-replay-0.1.0-SNAPSHOT.jar` después del build. Por defecto escucha solo en `127.0.0.1`. Es posible sobrescribirlo explícitamente con `--server.address=<dirección>`, pero no debe exponerse sin evaluar seguridad e infraestructura. Solo usar datos ficticios en un entorno local de confianza.
+
+## API HTTP
+- `GET /api/health`: `200 {"status":"ok"}`.
+- `POST /api/analyze`: `Content-Type: application/json`, cuerpo UTF-8 `{"text":"2026-10-15T10:00:00Z INFO app - Ready"}`. `text` debe ser cadena; las claves duplicadas se rechazan.
+- `200`: `{"analysis": {...}, "postmortemMarkdown": "..."}`. `analysis` incluye `events` (con `id`, `lineNumber`, timestamps, nivel, servicio, mensaje y `rawLine`), `invalidLineNumbers`, `blankLineCount`, `warnings`, `summary` (conteos y rango UTC) y `groups` (mensaje normalizado y IDs). El Markdown cubre todo el análisis, sin filtros.
+- `400 {"error":"Entrada inválida."}` para JSON, UTF-8 o texto inválido, vacío o sin eventos; `413 {"error":"Límite excedido."}` para límites superados. No se incluye la entrada en esos errores.
+- Ese formato de error corresponde a la validación de aplicación. Un framing HTTP inválido (por ejemplo, chunks malformados) puede ser rechazado directamente por Tomcat con un 400 cuyo cuerpo no sigue ese contrato; no asumir un envelope JSON uniforme para errores de transporte.
+- El texto decodificado admite hasta 1 048 576 bytes UTF-8 y 10 000 líneas no vacías. El cuerpo JSON completo tiene límite independiente de 6 292 480 bytes (6 × 1 MiB + 1024), comprobado durante la lectura incluso sin `Content-Length`; permite escapes JSON para un texto de hasta 1 MiB, pero no espacios o campos adicionales ilimitados. No hay endpoint separado de exportación.
+
+## Núcleo disponible
+- `backend/src/main/java/dev/incidentreplay/LogParser.java`: `parse(String)` y `parse(byte[])`; devuelve eventos, resumen global, rechazos, advertencias y grupos repetidos inmutables.
+- `backend/src/main/java/dev/incidentreplay/PostmortemGenerator.java`: `generate(Analysis)` produce un borrador Markdown del análisis completo, sin IA ni llamadas externas.
+- `fixtures/incident.log` y `fixtures/normal.log`: datos de demostración consumidos por las pruebas.
+- `docs/pruebas-fase-1.md`: correspondencia entre requisitos y pruebas.
+
+El reporte conserva evidencia como texto escapado para que mensajes con HTML o Markdown no se interpreten como contenido activo. No determina causas ni impacto. No hay variables de entorno ni claves necesarias en estas fases.
+
+## Formato
+`2026-10-15T10:02:14Z INFO payments - Request latency increased`
+
+Una línea por evento, UTF-8, LF/CRLF, timestamp ISO 8601 con `Z` o desplazamiento, nivel DEBUG/INFO/WARN/ERROR, servicio sin espacios y mensaje no vacío. Máximo 1 MiB y 10 000 líneas no vacías. Líneas vacías se cuentan aparte; las inválidas se reportan por número. Sin eventos válidos, la entrada se rechaza.
+
+## Datos y límites
+Solo usar ejemplos ficticios; no introducir secretos ni datos personales. El núcleo no almacena ni registra el contenido de entrada. La interfaz y cualquier proveedor externo se incorporarán en fases posteriores con su política explícita. No existe despliegue público.
