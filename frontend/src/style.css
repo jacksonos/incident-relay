@@ -115,6 +115,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   overflow-wrap: anywhere;
 }
 .error { background: var(--danger); border-color: var(--danger-text); color: var(--danger-text); }
+.consent { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.consent input { flex: 0 0 auto; width: 20px; min-height: 20px; height: 20px; margin: 0; }
+.ai-result { overflow-wrap: anywhere; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 8px; }
 
 .summary {
   display: grid;

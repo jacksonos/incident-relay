@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "IR_AI_ENABLED=false")
 class ApiControllerTest {
     private static final String VALID = "2026-10-15T10:00:00Z INFO app - Ready";
     private final HttpClient client = HttpClient.newHttpClient();
@@ -81,6 +81,17 @@ class ApiControllerTest {
         assertThat(analysis.at("/groups/2/eventIds").toString()).isEqualTo("[\"event-1\",\"event-9\"]");
         assertThat(root.path("postmortemMarkdown").asText()).isEqualTo(generator.generate(expected));
         assertThat(text(fixture).body()).isEqualTo(response.body());
+    }
+
+    @Test void disabledInsightsAreUnavailableOverHttp() throws Exception {
+        var config = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/insights/config"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(mapper.readTree(config.body()).toString()).isEqualTo("{\"available\":false}");
+        var response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/insights"))
+                .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("not-json"))
+                .build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).isEqualTo(503);
+        assertThat(response.body()).doesNotContain("not-json", "Exception");
     }
 
     @Test void rejectsMalformedAndUnsafeInput() throws Exception {

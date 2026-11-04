@@ -1,7 +1,7 @@
 # Handoff
 
 ## Autorización
-Fases 0–3 completadas. El usuario autorizó publicar lo pendiente con la cuenta personal `jacksonos`, continuar fase 3 y resolver su bloqueo manteniendo el reparto. Fases 4–5 bloqueadas hasta nueva autorización.
+Fases 0–4 completadas. El usuario autorizó publicar con la cuenta personal `jacksonos` y continuar con fase 4 (IA opcional), verificada con proveedor simulado. Fase 5 bloqueada hasta nueva autorización.
 
 Autorización adicional completada: mejorar la interfaz con `design-taste-frontend`, como refinamiento conservador de fase 3 sobre `feat/deterministic-ui`. No autoriza fase 4 ni cambios de contrato/backend. Flujo, evidencia y privacidad preservados; resultados del refinamiento registrados abajo.
 
@@ -123,8 +123,44 @@ El puerto 5173 tenía un Vite existente del usuario; no se detuvo. La primera ej
 
 Capturas reales ignoradas en `frontend/test-results/`: `app-tema-light-evidencia-larga-y-foco/light-desktop.png`, `app-tema-dark-evidencia-larga-y-foco/dark-desktop.png`, `app-móvil-y-navegación-por-teclado/mobile.png`. Se inspeccionó el ajuste final móvil y ambos temas. Muestras de contraste y tests no sustituyen auditoría completa; no se ejecutó Lighthouse ni se midieron Core Web Vitals, no hubo pruebas en teléfono real/Safari/Firefox. No se afirma cumplimiento total de la checklist de marketing, que no aplica a esta superficie de producto.
 
+## Fase 4
+Completada y verificada el 2026-11-04 tras aprobación del frontend. Rama `feat/optional-ai-insights` basada en `d542b33`, confirmado sincronizado con `origin/feat/deterministic-ui` antes de empezar. No merge a main ni despliegue.
+
+Orquestación ejecutada: Sol high definió contrato y revisó seguridad; Terra medium implementó por unidades (transporte, validación, endpoints, interfaz); Luna low verificó independientemente. El primer encargo amplio no produjo código y solo verificó baseline de 48 tests; se dividió en unidades acotadas sin cambiar reparto ni esfuerzo.
+
+Entregado:
+- `GET /api/insights/config` devuelve solo disponibilidad sin llamadas externas ni secretos. IA desactivada por defecto; variables servidor `IR_AI_ENABLED`, `IR_AI_API_KEY`, `IR_AI_MODEL`, `IR_AI_ENDPOINT`. Configuración inválida no aborta el arranque; endpoint HTTPS en producción. Excepción HTTP loopback solo en constructor interno de pruebas.
+- `POST /api/insights` requiere consentimiento verdadero y selección normalizada: hasta 100 eventos, seis campos permitidos, IDs/líneas únicos coherentes, orden cronológico, UTC, tipos y Unicode válidos. Sin rawLine/timestampOriginal. El servidor stateless valida forma y coherencia, no autenticidad del origen.
+- Selección acotada a 65 536 bytes de la cadena JSON compacta codificada en UTF-8; envelope HTTP separado de 81 920 bytes, limitado durante lectura incluso chunked. No truncar mensajes ni rebajar silenciosamente la selección.
+- Transporte Java estándar sin nuevas dependencias: conexión hasta 3 s, plazo total de 15 s incluida lectura, respuesta hasta 128 KiB mientras llega, sin redirects ni reintentos. Cancelación observada en servidor fake tanto por exceso chunked como timeout durante goteo.
+- Esquema de salida acotado y estricto; toda hipótesis con referencias vacías, duplicadas o inexistentes se descarta entera y se advierte. Referencias existentes no prueban causalidad ni exactitud. Errores seguros 400/413/503/502/504; sin cuerpo externo ni claves en mensajes.
+- UI con disponibilidad, selección explícita de primeros 100 eventos del conjunto completo independiente de filtros, explicación de campos/cobertura/retención y consentimiento desmarcado. Sin envío automático; excesos bloquean solicitud sin alterar hechos.
+- Cancelación de solicitudes obsoletas y reinicio de consentimiento al cambiar entrada/análisis. Fallos conservan exactamente la exportación determinista. Éxito muestra hipótesis/preguntas y citas con línea, modo asistido y anexo Markdown escapado; vista previa y descarga usan el mismo documento.
+- `.env.example` contiene valores vacíos y flag false, no se carga automáticamente. Configuración, límites y privacidad documentados en README, frontend/README y ADR 0002. Sin API real ni credenciales reales.
+
+Revisión y correcciones cerradas:
+- Clave sintética CR/LF deshabilita disponibilidad y devuelve 503 sin llamada; límites HTTP de 100/101 eventos cubiertos.
+- Se alinearon vista previa/descarga asistidas e indicador global de modo. Se añadieron casos config pendiente/fallida/deshabilitada, frontera exacta de selección, cancelación IA y fallback determinista.
+- Sol detectó discrepancia para emojis: Jackson al escribir byte[] podía contar pares surrogate como escapes, a diferencia del navegador/envío String. Se confirmó RED con 6 000 emojis y se corrigió para medir la misma cadena JSON UTF-8 del envío. Regresiones HTTP: 6 000 emojis, pares escapados, 65 536 bytes aceptados, 65 540 rechazados sin llamada adicional y límite independiente del envelope. Revisión focal final: P2 resuelto, sin nuevos defectos confirmados.
+- Hubo fallos iniciales de pruebas por fecha inválida no convertida a error seguro y selectores E2E ambiguos al añadir textos asistidos, corregidos y seguidos de ejecuciones completas aprobadas. No se cambió modelo, esfuerzo ni reparto.
+
+Verificación final independiente de Luna low:
+
+```text
+raíz: .\mvnw.cmd -B -ntp -f backend/pom.xml clean verify
+81 pruebas, 0 fallos, 0 errores, 0 omitidas; BUILD SUCCESS, exit code 0
+frontend: npm.cmd run build
+exit code 0; 88 módulos transformados
+frontend: npm.cmd run test:e2e -- --config playwright.verify.config.ts
+24 aprobadas, 0 fallidas, 0 omitidas; exit code 0
+```
+
+E2E con instancias propias en 5174/8080 y `reuseExistingServer:false`; el proceso existente del usuario en 5173 no se detuvo ni reutilizó. Configuración de pruebas fuerza IA desactivada y credenciales vacías; casos de UI asistida usan mocks, backend usa proveedor HTTP local simulado. Config temporal solo cambió puerto/baseURL y se eliminó antes del commit; comando normal reproducible con 5173/8080 libres: `npm.cmd run test:e2e`. JAR usado por E2E construido por `clean verify` final.
+
+Orquestador inspeccionó captura renderizada `frontend/test-results/insights-consentimiento-ex-692f7--y-descarga-asistida-segura/ia-asistida.png`: muestra salida sintética de prueba, no resultado real de un proveedor. Artefacto ignorado, no se versiona. No se probó un proveedor real ni se garantiza eliminación de prompt injection o retención externa. La aplicación sigue siendo local de confianza, no está preparada para exposición pública sin revisión adicional.
+
 ## Límites y siguiente paso
-- Detenido tras fase 3. Siguiente: fase 4 (IA opcional), solo tras nueva autorización. No hay contenedor ni despliegue.
+- Detenido tras fase 4. Siguiente: fase 5 (contenedor, documentación y demo), solo tras nueva autorización. No hay despliegue.
 - Sin medidor de cobertura de líneas/ramas; la cobertura declarada es de requisitos, no un porcentaje de código medido.
 - El wrapper de Windows fue ejecutado; el script Unix no se probó en Linux/macOS.
 - Advertencia de Mockito/Byte Buddy por carga dinámica de agente en Java 21; no hay errores de prueba. Revisar configuración del agente si se actualiza el JDK.
